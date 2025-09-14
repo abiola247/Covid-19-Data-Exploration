@@ -2,17 +2,17 @@
 ![](https://health.maryland.gov/Pictures/covid-19.png)
 
 ### Dataset:
-The dataset contains two (2) Microsoft Excel files. One of the files was named "CovidDeaths", while the other was named "CovidVaccinations".
+The dataset consists of two Microsoft Excel files: one named "CovidDeaths" and the other "CovidVaccinations". These files contain comprehensive global data on COVID-19 death statistics and vaccination progress.
 
 ### Questions Answered:
-I answered the following questions using my SQL exploration skills:
+Using SQL exploration techniques, the following key COVID-19 related questions were analyzed and answered:
 
-- Percentage of Death Rate
-- Percentage of infected people
-- Countries with the highest infection rate
-- Continents with the highest death count
-- Countries with the highest death count
-- Total People Vaccinated
-- Percentage of Vaccinated People
+- What is the percentage death rate across different locations and continents?
+- What percentage of the population has been infected with COVID-19?
+- Which countries have the highest infection rates relative to their populations?
+- Which continents have the highest death counts?
+- Which countries have the highest total death counts?
+- How many people in total have been vaccinated against COVID-19?
+- What is the percentage of the population vaccinated in each location?
 ---
-_Thank you for reading and checking out my code_:clap:
+Thank you for reviewing and exploring this analysis of COVID-19 data! :clap:
