@@ -1,0 +1,127 @@
+- COVID 19 DATA EXPLORATION
+SELECT *
+FROM CovidDeaths
+WHERE continent IS NOT NULL
+ORDER BY 1,2
+
+-- Select Data that we are going to be starting with
+SELECT location, date, population,total_cases,total_deaths
+FROM CovidDeaths
+ORDER BY 1,2
+
+---Enumerating the percentage of death rate from death cases
+
+--  Comparing location 
+SELECT   location,
+ sum(total_cases) as total_cases, sum(total_deaths) as total_deaths,
+ (SUM(total_deaths) * 1.0 / SUM(total_cases)) * 100 AS TotalDeathPercentage
+  FROM CovidDeaths
+   where total_deaths IS NOT NULL
+  GROUP BY location
+  
+--  Comparing continent 
+SELECT   continent,
+ sum(total_cases) as total_cases, sum(total_deaths) as total_deaths,
+ (SUM(total_deaths)* 1.0 / SUM(total_cases)) * 100 AS TotalDeathPercentage
+  FROM CovidDeaths
+  WHERE continent IS NOT NULL
+  GROUP BY continent
+--
+-- Total cases VS population (percentage of people who got covid in a total population)
+
+SELECT location, date, total_cases, population, 
+round(((total_cases * 1.0 /population)*100),5)  AS PopulationPercentage
+FROM CovidDeaths
+ORDER BY 1,2
+
+--Countries with the highest infection rate compared to their population
+
+SELECT location, population, MAX(total_cases) AS HighestInfectionCount, 
+MAX(round(((total_cases * 1.0 /population)*100),5) ) AS PopulationPercentage
+FROM CovidDeaths
+GRoUP BY population, location
+ORDER BY PopulationPercentage DESC
+
+--Continents with the highest death count per population
+SELECT continent, MAX(cast(total_deaths AS INT)) as TotalDeathCount
+FROM CovidDeaths
+WHERE continent IS NOT NULL
+GROUP BY continent
+ORDER BY TotalDeathCount DESC
+  
+
+  --Joining the Deaths and Vaccinations Table On Location and Date
+
+SELECT *
+FROM CovidDeaths dea
+JOIN covidVaccinations vac
+ON dea.location = vac.location
+AND dea.date = vac.date
+
+--How many people have been vaccinated from the total population
+
+SELECT dea.continent, dea.location, dea.date, dea.population, vac.new_vaccinations, 
+SUM(CAST(vac.new_vaccinations AS INT)) OVER (PARTITION BY dea.location ORDER BY dea.location, dea.Date) AS RollingPeopleVaccinated
+FROM CovidDeaths dea
+JOIN CovidVaccinations vac
+ON dea.location = vac.location
+AND dea.date = vac.date
+WHERE dea.continent IS NOT NULL
+ORDER BY 2,3
+
+
+--Using CTE to calculate the above
+WITH PopvsVac (continent, location, Date, Population, new_vaccinations, RollingPeopleVaccinated)
+AS
+(
+SELECT dea.continent, dea.location, dea.date, dea.population, vac.new_vaccinations, 
+SUM(CAST(vac.new_vaccinations AS INT)) OVER (PARTITION BY dea.location ORDER BY dea.location, dea.Date) AS RollingPeopleVaccinated
+FROM CovidDeaths dea
+JOIN CovidVaccinations vac
+ON dea.location = vac.location
+AND dea.date = vac.date
+WHERE dea.continent IS NOT NULL
+--ORDER BY 2,3)
+)
+SELECT *, (RollingPeopleVaccinated/Population)*100 PeopleVaccinatedPercentage
+FROM PopvsVac
+
+
+--TEMP TABLE
+
+-- Drop temp table if it exists
+DROP TABLE IF EXISTS PercentPopulationVaccinated;
+
+-- Create temp table with correct name
+CREATE TEMP TABLE PercentPopulationVaccinated 
+(
+   Continent TEXT,
+    Location TEXT,
+    Date TEXT,
+    Population INTEGER,
+    New_vaccinations INTEGER,
+    RollingPeopleVaccinated INTEGER
+);
+
+INSERT INTO PercentPopulationVaccinated
+SELECT dea.continent, dea.location, dea.date, dea.population, vac.new_vaccinations, 
+SUM(CAST(vac.new_vaccinations AS INTEGER)) OVER (PARTITION BY dea.location ORDER BY dea.location, dea.Date) AS RollingPeopleVaccinated
+FROM CovidDeaths dea
+JOIN CovidVaccinations vac
+ON dea.location = vac.location
+AND dea.date = vac.date
+WHERE dea.continent IS NOT NULL
+
+SELECT *, (RollingPeopleVaccinated * 100) / Population AS PeopleVaccinatedPercentage
+FROM PercentPopulationVaccinated;
+
+--Creating View to stroe data for later visualizations
+
+CREATE VIEW PercentPopulationVaccinated AS
+SELECT dea.continent, dea.location, dea.date, dea.population, vac.new_vaccinations, 
+SUM(CONVERT(INT, vac.new_vaccinations)) OVER (PARTITION BY dea.location ORDER BY dea.location, dea.Date) AS RollingPeopleVaccinated
+FROM CovidDeaths dea
+JOIN CovidVaccinations vac
+ON dea.location = vac.location
+AND dea.date = vac.date
+WHERE dea.continent IS NOT NULL
